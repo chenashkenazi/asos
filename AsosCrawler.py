@@ -34,17 +34,12 @@ class AsosCrawler:
         result = requests.get(url=url_req)
         print(result.json())
 
-    def parse_size(self, text):
-        final_size = ""
-        for i in range(3, len(text)):
-            if text[i].isdigit() or text[i] == "." or text[i] == "/":
-                final_size += text[i]
-            elif text[i] == " " and text[i+1].isdigit():
-                final_size += text[i]
-            else:
-                break
-        print(f"final size: {final_size}")
-        return final_size
+    def parse_size(self, text, size_list):
+        text_list = list(text.split(" "))
+        for part in size_list:
+            if part not in text_list:
+                return False
+        return True
 
     def check_size(self, size):
         self.get_page()
@@ -52,12 +47,11 @@ class AsosCrawler:
         if select:
             options = select.find_elements(By.TAG_NAME, "option")
             for option in options:
-                option_size = self.parse_size(option.text)
-                if size == option_size:
+                if self.parse_size(option.text, list(size.split(" "))):
                     if "Out of stock" in option.text:
-                        self.send_message(f"Size EU {size} is unavailable :(")
+                        self.send_message(f"Size {size} is unavailable :(")
                     else:
-                        self.send_message(f"Size EU {size} is available!\n{self.url}")
+                        self.send_message(f"Size {size} is available!\n{self.url}")
         else:
             self.send_message("Didn't find sizes element, check your code!")
 
