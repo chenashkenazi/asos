@@ -16,9 +16,10 @@ class AsosCrawler:
 
     def get_driver(self):
         options = webdriver.ChromeOptions()
-        options.binary_location = self.binary_location
+        options.add_argument("headless")
+        # options.binary_location = self.binary_location
 
-        driver = webdriver.Chrome(executable_path=self.driver_location, chrome_options=options)
+        driver = webdriver.Chrome(executable_path=self.driver_location)
 
         self.driver = driver
 
@@ -30,6 +31,7 @@ class AsosCrawler:
         self.driver.quit()
 
     def send_message(self, text):
+        print("send_message started")
         url_req = f"https://api.telegram.org/bot{self.token}/sendMessage?chat_id={self.chat_id}&text={text}"
         result = requests.get(url=url_req)
         print(result.json())
@@ -42,17 +44,21 @@ class AsosCrawler:
         return True
 
     def check_size(self, size):
+        print("check_size started")
         self.get_page()
-        select = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.ID, "main-size-select-0")))
+        select = WebDriverWait(self.driver, 120).until(EC.presence_of_element_located((By.ID, "main-size-select-0")))
         if select:
             options = select.find_elements(By.TAG_NAME, "option")
             for option in options:
                 if self.parse_size(option.text, list(size.split(" "))):
                     if "Out of stock" in option.text:
+                        print(f"Size {size} is unavailable :(")
                         self.send_message(f"Size {size} is unavailable :(")
                     else:
+                        print(f"Size {size} is available!\n{self.url}")
                         self.send_message(f"Size {size} is available!\n{self.url}")
         else:
+            print("Didn't find sizes element, check your code!")
             self.send_message("Didn't find sizes element, check your code!")
 
         time.sleep(3)
