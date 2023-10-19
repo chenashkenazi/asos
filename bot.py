@@ -20,4 +20,12 @@ def echo_all(message):
     bot.reply_to(message, message.text)
 
 
+@bot.message_handler(func=lambda message: message.new_chat_members is not None)
+def welcome_new_members(message):
+    for user in message.new_chat_members:
+        bot.send_message(message.chat.id, f"Welcome to Asos Notifier Bot, {user.first_name}!\n"
+                                          f"Please send a link to the item you would like to be notified.\n"
+                                          f"After sending, choose a size.")
+
+
 bot.infinity_polling()
