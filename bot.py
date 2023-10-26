@@ -1,31 +1,37 @@
 import os
 
 import telebot
+from telebot import types
+
+from AsosCrawler import AsosCrawler
 
 bot_token = os.environ.get("BOT_TOKEN")
-
-if bot_token is None:
-    raise Exception("Bot token is not defined")
 
 bot = telebot.TeleBot(bot_token)
 
 
 @bot.message_handler(commands=['start', 'hello'])
 def send_welcome(message):
-    bot.reply_to(message, "Howdy, how are you doing?")
+    bot.reply_to(message, "Start message")
+
+
+@bot.message_handler(commands=['help'])
+def send_welcome(message):
+    bot.reply_to(message, "Instructions")
 
 
 @bot.message_handler(func=lambda msg: True)
-def echo_all(message):
-    bot.reply_to(message, message.text)
+def return_size_from_asos_item(message):
+    asos_crawler = AsosCrawler(url=message.text, binary_location="", driver_location="")
+    sizes = asos_crawler.get_sizes()
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    for size in sizes:
+        markup.add(types.InlineKeyboardButton(text=size, callback_data=size))
+    bot.send_message(message.chat.id, "Choose desired size", reply_markup=markup)
 
 
-@bot.message_handler(func=lambda message: message.new_chat_members is not None)
-def welcome_new_members(message):
-    for user in message.new_chat_members:
-        bot.send_message(message.chat.id, f"Welcome to Asos Notifier Bot, {user.first_name}!\n"
-                                          f"Please send a link to the item you would like to be notified.\n"
-                                          f"After sending, choose a size.")
-
+@bot.callback_query_handlers(func=lambda call:True)
+def notify_on_size(callback):
+    pass
 
 bot.infinity_polling()
